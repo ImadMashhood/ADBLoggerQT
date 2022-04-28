@@ -73,7 +73,8 @@ class ADB:
         "kill-server",
         "start-server",
         "version",
-        "help"
+        "help",
+        "connect"
         )
 
     @classmethod
