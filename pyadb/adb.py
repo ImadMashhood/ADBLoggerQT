@@ -74,7 +74,8 @@ class ADB:
         "start-server",
         "version",
         "help",
-        "connect"
+        "connect",
+        "logcat"
         )
 
     @classmethod

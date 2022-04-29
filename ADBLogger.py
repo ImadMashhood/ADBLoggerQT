@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import multiprocessing
+import psutil
 
 from pyadb import ADB
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -169,21 +170,16 @@ class Ui_MainWindow(object):
                 return
         if self.fileName == "":
             timeStamp = datetime.now()
-            self.fileName = timeStamp.strftime("%d/%m/%Y %H-%M-%S")+"-logs"
+            self.fileName = timeStamp.strftime("%d-%m-%Y-%H-%M-%S")+"-logs"
             self.fileName = sanitize_filepath(self.fileName)
             self.fileNameTB.setText(self.fileName)
             app.processEvents()
         self.startBtn.setDisabled(True)
-        self.stopBtn.setDisabled(False)
-        self.progressBar.setVisible(True)
-        self.status.setText("Attempting Connection")
+        self.status.setText("Attempting Connection...")
         app.processEvents()
-        #adbConnectionAttempt = str(check_output(["adb", "connect", ipAddress]))
-        #print(adbConnectionAttempt)
         adb.start_server()
         devices = adb.get_devices()
         adbConnectionAttempt = adb.connect_remote(ipAddress, 5555)
-        adb.set_target_device(devices[0])
         if "failed" in adbConnectionAttempt:
             msg = QMessageBox()
             msg.setWindowTitle("Connection to IP Failed")
@@ -193,33 +189,42 @@ class Ui_MainWindow(object):
             x = msg.exec_()
             self.stopBtnClick()
             return
+        self.stopBtn.setDisabled(False)
+        self.progressBar.setVisible(True)
+        app.processEvents()
         if self.clearPrevLogsChB.isChecked():
             self.status.setText("Clearing Prev Logs")
             app.processEvents()
-            #print(check_output(["adb", "logcat", "-c"]))
             adb.get_logcat("-c")
         self.isLogging = True
         self.status.setText("Logging IP Address: " + ipAddress)
         self.t = TTT()
+        self.t.fileName = self.fileName
         self.t.start()
+
 
     def stopBtnClick(self):
         self.progressBar.setVisible(False)
-        os.system("taskkill /f /im adb.exe")
+        PROCNAME = "adb.exe"
+        for proc in psutil.process_iter():
+            if proc.name() == PROCNAME:
+                proc.kill()
         self.status.setText("Process Stopped")
         if self.isLogging:
             self.status.setText("Logging complete, file saved")
             self.t.quit_flag = True
             self.t.wait()
 
+
 class TTT(QThread):
     def __init__(self):
         super(TTT, self).__init__()
         self.quit_flag = False
+        self.fileName = ""
 
     def run(self):
         if not self.quit_flag:
-            print(adb.get_logcat(" > "+os.getcwd()+fileName+".txt"))
+            os.system('cmd /c "adb logcat > '+self.fileName+'.txt')
         self.quit()
         self.wait()
 
