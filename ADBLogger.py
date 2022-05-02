@@ -208,7 +208,7 @@ class Ui_MainWindow(object):
         self.status.setText("Attempting Connection...")
         app.processEvents()
         # Starts connection and validates connection.
-        adbConnectionAttempt = str(os.system("adb connect "+self.ipAddress))
+        adbConnectionAttempt = str(subprocess.check_output("adb connect "+self.ipAddress))
         if "failed" in adbConnectionAttempt:
             msg = QMessageBox()
             msg.setWindowTitle("Connection to IP Failed")
@@ -226,7 +226,7 @@ class Ui_MainWindow(object):
         if self.clearPrevLogs:
             self.status.setText("Clearing Prev Logs")
             app.processEvents()
-            os.system(str("adb logcat -c"))
+            subprocess.check_output("adb logcat -c")
         # Prepares for threading and logging.
         self.isLogging = True
         self.status.setText("Logging IP Address: " + self.ipAddress)
@@ -309,7 +309,7 @@ class TTT(QThread):
     def run(self):
         # Runs logcat
         if not self.quit_flag:
-            os.system("adb -s " + self.ipAddress + " logcat > " + self.fileName + '.txt')
+            subprocess.check_output("adb -s " + self.ipAddress + " logcat > " + self.fileName + '.txt')
         self.quit()
         self.wait()
 
