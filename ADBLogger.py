@@ -14,10 +14,11 @@ from pathvalidate import sanitize_filepath
 from datetime import datetime
 from qt_thread_updater import get_updater
 from PyQt5.QtCore import *
+from qt_material import apply_stylesheet
 
 fileName = ""
 adb = ADB()
-adb.set_adb_path('C:/Users/mashh/AppData/Local/Android/Sdk/platform-tools/adb.exe')
+adb.set_adb_path()#enter your ADB Path in here
 
 class Ui_MainWindow(object):
 
@@ -38,10 +39,11 @@ class Ui_MainWindow(object):
 
         #Main Window
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(575, 205)
+        MainWindow.setFixedSize(580, 215)
         MainWindow.setAutoFillBackground(False)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        apply_stylesheet(app, theme='dark_red.xml')
 
         #Start Button
         self.startBtn = QtWidgets.QPushButton(self.centralwidget)
@@ -183,7 +185,7 @@ class Ui_MainWindow(object):
         app.processEvents()
         adb.start_server()
         devices = adb.get_devices()
-        adbConnectionAttempt = adb.connect_remote(self.ipAddress, 5555)
+        adbConnectionAttempt = str(os.system("adb connect "+self.ipAddress))
         if "failed" in adbConnectionAttempt:
             msg = QMessageBox()
             msg.setWindowTitle("Connection to IP Failed")
@@ -200,7 +202,7 @@ class Ui_MainWindow(object):
         if self.clearPrevLogs:
             self.status.setText("Clearing Prev Logs")
             app.processEvents()
-            adb.get_logcat("-c")
+            os.system("adb logcat -c")
         self.isLogging = True
         self.status.setText("Logging IP Address: " + self.ipAddress)
         self.t = TTT()
@@ -247,7 +249,7 @@ class TTT(QThread):
 
     def run(self):
         if not self.quit_flag:
-            os.system('cmd /c "adb logcat > '+self.fileName+'.txt')
+            os.system("adb logcat > "+self.fileName+'.txt')
         self.quit()
         self.wait()
 
