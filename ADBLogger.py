@@ -1,5 +1,6 @@
 import os
 import pathlib
+import subprocess
 import webbrowser
 import multiprocessing
 import psutil
@@ -22,6 +23,7 @@ class Ui_MainWindow(object):
         self.t = None
         self.fileName = None
         self.ipAddress = None
+        self.devices = []
         self.clearPrevLogs = None
 
     def setupUi(self, MainWindow):
@@ -109,6 +111,7 @@ class Ui_MainWindow(object):
         self.ipAddressCB.setGeometry(QtCore.QRect(85, 15, 412, 35))
         font = QtGui.QFont()
         font.setPointSize(12)
+        self.restoreSettings()
         self.ipAddressCB.setFont(font)
         self.ipAddressCB.setEditable(True)
         self.ipAddressCB.setVisible(False)
@@ -132,9 +135,9 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.restoreSettings()
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.getAllDevices()
 
     def retranslateUi(self, MainWindow):
         # Set texts for Translations
@@ -152,7 +155,19 @@ class Ui_MainWindow(object):
 
     def startBtnClick(self):
         # Pulls IP Address for validation
-        self.ipAddress = self.ipAddressTB.text()
+        if 1 == len(self.devices):
+            self.ipAddress = self.ipAddressTB.text()
+            if self.ipAddress not in self.devices:
+                self.ipAddressCB.addItem(self.ipAddress)
+                self.devices.append(self.ipAddress)
+        elif len(self.devices) > 1:
+            if self.ipAddress not in self.devices:
+                self.ipAddressCB.addItem(self.ipAddress)
+                self.devices.append(self.ipAddress)
+                self.ipAddress = self.ipAddressCB.currentText()
+        elif len(self.devices) == 0:
+            self.ipAddress = self.ipAddressTB.text()
+            self.devices.append(self.ipAddress)
         if self.ipAddress == "":
             msg = QMessageBox()
             msg.setWindowTitle("Invalid IP")
@@ -187,6 +202,9 @@ class Ui_MainWindow(object):
             # command having inconsistent results when stopped).
         self.startBtn.setDisabled(True)
         self.openBtn.setDisabled(True)
+        self.ipAddressTB.setDisabled(True)
+        self.fileNameTB.setDisabled(True)
+        self.ipAddressCB.setDisabled(True)
         self.status.setText("Attempting Connection...")
         app.processEvents()
         # Starts connection and validates connection.
@@ -208,7 +226,7 @@ class Ui_MainWindow(object):
         if self.clearPrevLogs:
             self.status.setText("Clearing Prev Logs")
             app.processEvents()
-            os.system("adb logcat -c")
+            os.system(str("adb logcat -c"))
         # Prepares for threading and logging.
         self.isLogging = True
         self.status.setText("Logging IP Address: " + self.ipAddress)
@@ -233,6 +251,24 @@ class Ui_MainWindow(object):
         self.stopBtn.setDisabled(True)
         self.startBtn.setDisabled(False)
         self.openBtn.setDisabled(False)
+        self.ipAddressTB.setDisabled(False)
+        self.fileNameTB.setDisabled(False)
+        self.ipAddressCB.setDisabled(False)
+
+    def getAllDevices(self):
+        proc = subprocess.Popen("adb devices", stdout=subprocess.PIPE)
+        for index, line in enumerate(proc.stdout.readlines()):
+            if str(":") in str(line):
+                splitString = str(line.decode('unicode_escape')).split(str(":")[0])
+                self.devices.append(splitString[0])
+        print(self.devices)
+        if len(self.devices) > 1:
+            self.ipAddressTB.setVisible(False)
+            self.ipAddressCB.setVisible(True)
+            self.ipAddressCB.clear()
+            self.ipAddressCB.addItems(self.devices)
+            self.ipAddressCB.setCurrentIndex(0)
+            app.processEvents()
 
     # Opens file path
     def openBtnClick(self):
@@ -248,14 +284,19 @@ class Ui_MainWindow(object):
     def saveSettings(self):
         settings = QSettings('verizon', 'adblogger')
         settings.setValue('ipaddress', self.ipAddress)
+        settings.setValue('devices', self.devices)
         settings.setValue('clearprevlogs', self.clearPrevLogs)
 
     # Pulls previous user input
     def restoreSettings(self):
         settings = QSettings('verizon', 'adblogger')
         self.ipAddress = settings.value('ipaddress', self.ipAddress)
+        self.devices = settings.value('devices', self.ipAddress)
         self.clearPrevLogs = settings.value('clearprevlogs', self.clearPrevLogs)
-        self.ipAddressTB.setText(self.ipAddress)
+        if len(self.devices):
+            self.ipAddressTB.setText(self.ipAddress)
+        if len(self.devices):
+            self.ipAddressCB.setCurrentText(self.ipAddress)
         self.clearPrevLogsChB.setChecked(bool(self.clearPrevLogs))
 
 class TTT(QThread):
