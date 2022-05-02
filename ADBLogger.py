@@ -27,9 +27,9 @@ class Ui_MainWindow(object):
         self.clearPrevLogs = None
 
     def setupUi(self, MainWindow):
-        ######################################
-        #           UI Components            #
-        ######################################
+        #####################################
+        #           UI Components           #
+        #####################################
 
         # Main Window
         MainWindow.setObjectName("MainWindow")
