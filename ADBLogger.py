@@ -262,7 +262,7 @@ class Ui_MainWindow(object):
                 splitString = str(line.decode('unicode_escape')).split(str(":")[0])
                 self.devices.append(splitString[0])
         print(self.devices)
-        if len(self.devices) > 1:
+        if not self.devices:
             self.ipAddressTB.setVisible(False)
             self.ipAddressCB.setVisible(True)
             self.ipAddressCB.clear()
