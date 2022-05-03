@@ -262,13 +262,14 @@ class Ui_MainWindow(object):
                 splitString = str(line.decode('unicode_escape')).split(str(":")[0])
                 self.devices.append(splitString[0])
         print(self.devices)
-        if not self.devices:
-            self.ipAddressTB.setVisible(False)
-            self.ipAddressCB.setVisible(True)
-            self.ipAddressCB.clear()
-            self.ipAddressCB.addItems(self.devices)
-            self.ipAddressCB.setCurrentIndex(0)
-            app.processEvents()
+        if self.devices:
+            if len(self.devices) > 1:
+                self.ipAddressTB.setVisible(False)
+                self.ipAddressCB.setVisible(True)
+                self.ipAddressCB.clear()
+                self.ipAddressCB.addItems(self.devices)
+                self.ipAddressCB.setCurrentIndex(0)
+                app.processEvents()
 
     # Opens file path
     def openBtnClick(self):
@@ -291,12 +292,13 @@ class Ui_MainWindow(object):
     def restoreSettings(self):
         settings = QSettings('verizon', 'adblogger')
         self.ipAddress = settings.value('ipaddress', self.ipAddress)
-        self.devices = settings.value('devices', self.ipAddress)
+        self.devices = settings.value('devices', self.devices)
         self.clearPrevLogs = settings.value('clearprevlogs', self.clearPrevLogs)
-        if len(self.devices):
-            self.ipAddressTB.setText(self.ipAddress)
-        if len(self.devices):
-            self.ipAddressCB.setCurrentText(self.ipAddress)
+        if self.devices:
+            if len(self.devices) == 1:
+                self.ipAddressTB.setText(self.ipAddress)
+            if len(self.devices) > 1:
+                self.ipAddressCB.setCurrentText(self.ipAddress)
         self.clearPrevLogsChB.setChecked(bool(self.clearPrevLogs))
 
 class TTT(QThread):
